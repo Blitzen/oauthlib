@@ -31,7 +31,7 @@ class OAuth2Token(dict):
         try:
             self._new_scope = set(utils.scope_to_list(params.get('scope', '')))
         except TypeError:
-            self._new_scope = ''
+            self._new_scope = None
         if old_scope is not None:
             self._old_scope = set(utils.scope_to_list(old_scope))
         else:
