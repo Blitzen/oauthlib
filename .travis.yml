@@ -1,27 +1,28 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "3.4"
-  - "pypy"
-
+sudo: false
+cache:
+  directories:
+  - "$HOME/.cache/pip"
 install:
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install --use-mirrors unittest2; fi
-  - pip install nose pycrypto mock pyjwt blinker
-
+- pip install tox coveralls
 script:
-  - nosetests -w tests
-
-after_success:
-  - pip install coveralls
-  - coverage run --source=oauthlib setup.py -q nosetests
-  - coveralls
-
-branches:
-  only:
-    - master
-
+- tox
+env:
+- TOXENV=py26
+- TOXENV=py27
+- TOXENV=py32
+- TOXENV=py33
+- TOXENV=py32
+- TOXENV=pypy
+- TOXENV=pypy3
+after_success: coveralls
 notifications:
-  irc: "irc.freenode.org#oauthlib"
+  irc: irc.freenode.org#oauthlib
+deploy:
+  provider: pypi
+  user: ib.lundgren
+  password:
+    secure: PGZF9pRiTGCSwQjk1ddTKF3x4rQ0iAiPbg2uSixyO68uMXRgJjwHhSrNM0OEqtK5YWU5FE5L0DwR1nkrpEJKO4a5q2EOgos+gVoKpJfinoUNOOkjc1VHpqKM0uRf/OKrw1alvWUwqvW8B+DOb9TY5c5VZxQuRL+iwdrtwzFlKls=
+  on:
+    tags: true
+    repo: idan/oauthlib

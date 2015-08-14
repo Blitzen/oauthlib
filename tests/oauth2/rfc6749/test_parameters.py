@@ -95,8 +95,13 @@ class ParameterTests(TestCase):
                      '  "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",'
                      '  "example_parameter": "example_value",'
                      '  "scope":"abc def"}')
+    json_response_noscope = ('{ "access_token": "2YotnFZFEjr1zCsicMWpAA",'
+                     '  "token_type": "example",'
+                     '  "expires_in": 3600,'
+                     '  "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",'
+                     '  "example_parameter": "example_value" }')
 
-    json_error = '{ "error": "invalid_request" }'
+    json_error = '{ "error": "access_denied" }'
 
     json_notoken = ('{ "token_type": "example",'
                     '  "expires_in": 3600,'
@@ -125,6 +130,15 @@ class ParameterTests(TestCase):
        'scope': ['abc', 'def']
     }
 
+    json_noscope_dict = {
+       'access_token': '2YotnFZFEjr1zCsicMWpAA',
+       'token_type': 'example',
+       'expires_in': 3600,
+       'expires_at': 4600,
+       'refresh_token': 'tGzv3JOkF0XG5Qx2TlKWIA',
+       'example_parameter': 'example_value'
+    }
+
     json_notype_dict = {
        'access_token': '2YotnFZFEjr1zCsicMWpAA',
        'expires_in': 3600,
@@ -140,7 +154,7 @@ class ParameterTests(TestCase):
                             '&example_parameter=example_value'
                             '&scope=abc def')
 
-    url_encoded_error = 'error=invalid_request'
+    url_encoded_error = 'error=access_denied'
 
     url_encoded_notoken = ('token_type=example'
                            '&expires_in=3600'
@@ -191,8 +205,11 @@ class ParameterTests(TestCase):
     def test_json_token_response(self):
         """Verify correct parameter parsing and validation for token responses. """
         self.assertEqual(parse_token_response(self.json_response), self.json_dict)
-        self.assertRaises(InvalidRequestError, parse_token_response, self.json_error)
+        self.assertRaises(AccessDeniedError, parse_token_response, self.json_error)
         self.assertRaises(MissingTokenError, parse_token_response, self.json_notoken)
+
+        self.assertEqual(parse_token_response(self.json_response_noscope,
+            scope=['all', 'the', 'scopes']), self.json_noscope_dict)
 
         scope_changes_recorded = []
         def record_scope_change(sender, message, old, new):
@@ -212,6 +229,7 @@ class ParameterTests(TestCase):
             signals.scope_changed.disconnect(record_scope_change)
         del os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE']
 
+
     def test_json_token_notype(self):
         """Verify strict token type parsing only when configured. """
         self.assertEqual(parse_token_response(self.json_notype), self.json_notype_dict)
@@ -224,7 +242,7 @@ class ParameterTests(TestCase):
     def test_url_encoded_token_response(self):
         """Verify fallback parameter parsing and validation for token responses. """
         self.assertEqual(parse_token_response(self.url_encoded_response), self.json_dict)
-        self.assertRaises(InvalidRequestError, parse_token_response, self.url_encoded_error)
+        self.assertRaises(AccessDeniedError, parse_token_response, self.url_encoded_error)
         self.assertRaises(MissingTokenError, parse_token_response, self.url_encoded_notoken)
 
         scope_changes_recorded = []
